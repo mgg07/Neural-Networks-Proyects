@@ -1,0 +1,55 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+from sklearn.preprocessing import MinMaxScaler, LabelEncoder
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, LSTM
+from sklearn.model_selection import train_test_split
+
+
+df = pd.read_csv('CarPriceDataset.csv')
+
+#Encode catheogorical variables
+for col in df.columns:
+  if df[col].dtype=='object':
+    le = LabelEncoder()
+    df[col] = le.fit_transform(df[col])
+
+scaler = MinMaxScaler()
+scaled_data = scaler.fit_transform(df)
+
+X_train, X_test, y_train, y_test = train_test_split(X,y,test_size=0.2,shuffle=False)
+
+model = Sequential()
+model.add(Dense(64,input_dim=X_train.shape[1],activation='relu'))
+model.add(Dense(32, activation='relu'))
+model.add(Dense(1))
+
+model.compile(optimizer='adam', loss='mean_squared_error', metrics=['mae'])
+model.summary()
+
+#Training 
+model.fit(X_train,y_train, epochs=50,batch_size=16,validation_split=0.1)
+
+#Predictions
+predicted_prices = model.predict(X_test)
+
+#Model Evaluation
+plt.figure(figsize=(10,5))
+plt.plot(y_test, label='Actual Prices')
+plt.plot(predicted_prices, label='Predicted Prices')
+plt.title('Actual vs Predicted Car Prices')
+plt.xlabel('Sample')
+plt.ylabel('Price (scaled)')
+plt.legend()
+plt.show()
+
+#Metrics
+loss, mae = model.evaluate(X_test, y_test)
+print(f"Test MSE: {loss:.4f}")
+print(f"Test MAE: {mae:.4f}")
+
+
+
+
